@@ -1,5 +1,5 @@
 /* The batman package: fast computation of exoplanet transit light curves
- * Copyright (C) 2015 Laura Kreidberg	 
+ * Copyright (C) 2015 Laura Kreidberg 
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,118 +40,80 @@ static PyObject *_rsky(PyObject *self, PyObject *args);
 
 static PyObject *_getf(PyObject *self, PyObject *args);
 
-inline double getE(double M, double e)	//calculates the eccentric anomaly (see Seager Exoplanets book:  Murray & Correia eqn. 5 -- see section 3)
-{
-	double E = M, eps = 1.0e-7;
-	double fe, fs;
-
-	// modification from LK 05/07/2017:
-	// add fmod to ensure convergence for diabolical inputs (following Eastman et al. 2013; Section 3.1)
-	while(fmod(fabs(E - e*sin(E) - M), 2.*M_PI) > eps)
-	{
-		fe = fmod(E - e*sin(E) - M, 2.*M_PI);
-		fs = fmod(1 - e*cos(E), 2.*M_PI);
-		E = E - fe/fs;
-	}
-	return E;
-}
-
 static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 {
-	/*
-		This module computes the distance between the centers of the
-		star and the planet in the plane of the sky.  This parameter is
-		denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book
-		(see the section by Murray, and Winn eq. 5).  In the Mandel & Agol
-		(2002) paper, this quantity is denoted d.
+    /*
+        This module computes the distance between the centers of the
+        star and the planet in the plane of the sky.  This parameter is
+        denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book
+        (see the section by Murray, and Winn eq. 5).  In the Mandel & Agol
+        (2002) paper, this quantity is denoted d.
 
-		If f_only is 1, this function returns the true anomaly instead of the distance.
-	*/
-	double ecc, inc, a, omega, per, tc, BIGD = 100.;
-	int transittype, nthreads;;
-	npy_intp dims[1];
-	PyArrayObject *ts, *ds;
+        If f_only is 1, this function returns the true anomaly instead of the distance.
+    */
+    double tc, per, b, T14, BIGD = 100.;
+    int transittype, nthreads;;
+    npy_intp dims[1];
+    PyArrayObject *ts, *ds;
+    
+    if(!PyArg_ParseTuple(args,"Oddddii", &ts, &tc, &per, &b, &T14, &transittype, &nthreads)) return NULL;
+    
+    dims[0] = PyArray_DIMS(ts)[0];
+    ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
 
-  	if(!PyArg_ParseTuple(args,"Oddddddii", &ts, &tc, &per, &a, &inc, &ecc, &omega, &transittype, &nthreads)) return NULL;
+    double *t_array = PyArray_DATA(ts);
+    double *output_array = PyArray_DATA(ds);
 
-	dims[0] = PyArray_DIMS(ts)[0];
-	ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
-
-	double *t_array = PyArray_DATA(ts);
-	double *output_array = PyArray_DATA(ds);
-
-	const double n = 2.*M_PI/per;	// mean motion
-  const double eps = 1.0e-7;
+    const double n = 2.*M_PI/per;  // mean motion
+    const double eps = 1.0e-7;
 
 
-	#if defined (_OPENMP) && !defined(_OPENACC)
-	omp_set_num_threads(nthreads);	//specifies number of threads (if OpenMP is supported)
-	#endif
+    #if defined (_OPENMP) && !defined(_OPENACC)
+    omp_set_num_threads(nthreads);  //specifies number of threads (if OpenMP is supported)
+    #endif
 
-	#if defined (_OPENACC)
-	#pragma acc parallel loop copyin(t_array[:dims[0]]) copyout(output_array[:dims[0]])
-	#elif defined (_OPENMP)
-	#pragma omp parallel for
-	#endif
-	for(int i = 0; i < dims[0]; i++)
-	{
-		double t = t_array[i];
+    #if defined (_OPENACC)
+    #pragma acc parallel loop copyin(t_array[:dims[0]]) copyout(output_array[:dims[0]])
+    #elif defined (_OPENMP)
+    #pragma omp parallel for
+    #endif
+    for(int i = 0; i < dims[0]; i++)
+    {
+        double t = (t_array[i]-tc);
+        double f = 2*M_PI*t/per;
+        double t_phi = t%per;
+        
+        if (t_phi > per/2.){
+            t_phi -= per;
+        }
 
-		//calculates time of periastron passage from time of inferior conjunction
-		double f = M_PI/2. - omega;							//true anomaly corresponding to time of primary transit center
-		double E;
-		double M;
+        if (f_only) {
+            output_array[i] = f;
+        }
+        else {
+            double d;
+            
+            //planet is nontransiting, so d is set to large value
+            if (abs(t_phi) > T14) d = BIGD;
+            
+            //calculates separation of centers, approximating rp -> 0
+            else d = sqrt(b*b + 4./(T14*T14)*(1. - b*b)*(t_phi*t_phi))
+            output_array[i] = d;
+        }
 
-        // The true (f), eccentric (E) and mean (M) anomaly are all equal for a circular orbit 
-        // Follows from general formulas (see also: https://luger.dev/starry/v0.3.0/tutorials/basics3.html)
-		if(ecc < 1.0e-5)
-		{
-			E = f;				
-			M = f;
-		}
-		else
-		{        
-			E = 2.*atan(sqrt((1. - ecc)/(1. + ecc))*tan(f/2.));				//corresponding eccentric anomaly
-			M = E - ecc*sin(E);
-		}
-
-		double tp = tc - per*M/2./M_PI;							//time of periastron
-
-		if(ecc < 1.0e-5)
-		{
-			f = ((t - tp)/per - (int)((t - tp)/per))*2.*M_PI;			//calculates f for a circular orbit
-		}
-		else
-		{
-			M = n*(t - tp);
-			E = getE(M, ecc);
-			f = 2.*atan(sqrt((1.+ecc)/(1.-ecc))*tan(E/2.));
-		}
-		if (f_only) {
-			output_array[i] = f;
-		}
-		else {
-			double d;
-			if (transittype == 1 && sin(f + omega)*sin(inc) <= 0.) d = BIGD; //z < 0, so d is set to large value in order to not model primary transit during secondary eclipse
-			else if (transittype == 2 && sin(f + omega)*sin(inc) >= 0.) d = BIGD; //z > 0, so d is set to large value in order not to model secondary eclipse during primary transit
-			else d = a*(1.0 - ecc*ecc)/(1.0 + ecc*cos(f))*sqrt(1.0 - sin(omega + f)*sin(omega + f)*sin(inc)*sin(inc));	//calculates separation of centers
-			output_array[i] = d;
-		}
-
-	}
-	return PyArray_Return((PyArrayObject *)ds);
+    }
+    return PyArray_Return((PyArrayObject *)ds);
 }
 
 static PyObject *_rsky(PyObject *self, PyObject *args)
 {
-	return _rsky_or_f(self, args, 0);
+    return _rsky_or_f(self, args, 0);
 } 
-
 
 
 static PyObject *_getf(PyObject *self, PyObject *args)
 {
-	return _rsky_or_f(self, args, 1);
+    return _rsky_or_f(self, args, 1);
 }
 
 
@@ -174,30 +136,30 @@ static PyMethodDef _rsky_methods[] = {
 
 
 #if PY_MAJOR_VERSION >= 3
-	static struct PyModuleDef _rsky_module = {
-		PyModuleDef_HEAD_INIT,
-		"_rsky",
-		_rsky_doc,
-		-1, 
-		_rsky_methods
-	};
+    static struct PyModuleDef _rsky_module = {
+        PyModuleDef_HEAD_INIT,
+        "_rsky",
+        _rsky_doc,
+        -1, 
+        _rsky_methods
+    };
 
-	PyMODINIT_FUNC
-	PyInit__rsky(void)
-	{
-		PyObject* module = PyModule_Create(&_rsky_module);
-		if(!module)
-		{
-			return NULL;
-		}
-		import_array(); 
-		return module;
-	}
+    PyMODINIT_FUNC
+    PyInit__rsky(void)
+    {
+        PyObject* module = PyModule_Create(&_rsky_module);
+        if(!module)
+        {
+            return NULL;
+        }
+        import_array(); 
+        return module;
+    }
 #else
-	void init_rsky(void)
-	{
-	  Py_InitModule("_rsky", _rsky_methods);
-	  import_array();
-	}
+    void init_rsky(void)
+    {
+      Py_InitModule("_rsky", _rsky_methods);
+      import_array();
+    }
 #endif
 
