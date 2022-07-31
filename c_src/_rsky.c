@@ -81,7 +81,7 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
     {
         double t = (t_array[i]-tc);
         double f = 2*M_PI*t/per;
-        double t_phi = t%per;
+        double t_phi = fmod(t,per);
         
         if (t_phi > per/2.){
             t_phi -= per;
@@ -94,10 +94,10 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
             double d;
             
             //planet is nontransiting, so d is set to large value
-            if (abs(t_phi) > T14) d = BIGD;
+            if (fabs(t_phi) > T14) d = BIGD;
             
             //calculates separation of centers, approximating rp -> 0
-            else d = sqrt(b*b + 4./(T14*T14)*(1. - b*b)*(t_phi*t_phi))
+            else d = sqrt(b*b + 4./(T14*T14)*(1. - b*b)*(t_phi*t_phi));
             output_array[i] = d;
         }
 
