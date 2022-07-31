@@ -56,7 +56,7 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
     npy_intp dims[1];
     PyArrayObject *ts, *ds;
     
-    if(!PyArg_ParseTuple(args,"Oddddii", &ts, &tc, &per, &b, &T14, &transittype, &nthreads)) return NULL;
+    if(!PyArg_ParseTuple(args,"Odddddii", &ts, &tc, &per, &rp, &b, &T14, &transittype, &nthreads)) return NULL;
     
     dims[0] = PyArray_DIMS(ts)[0];
     ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
@@ -96,8 +96,8 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
             //planet is nontransiting, so d is set to large value
             if (fabs(t_phi) > T14) d = BIGD;
             
-            //calculates separation of centers, approximating rp -> 0
-            else d = sqrt(b*b + 4./(T14*T14)*(1. - b*b)*(t_phi*t_phi));
+            //calculates separation of centers
+            else d = sqrt(b*b + 4.0/(T14*T14)*((1.0+rp)*(1.0+rp) - b*b)*(t_phi*t_phi));
             output_array[i] = d;
         }
 
