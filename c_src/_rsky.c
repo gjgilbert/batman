@@ -56,7 +56,7 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
     npy_intp dims[1];
     PyArrayObject *ts, *ds;
     
-    if(!PyArg_ParseTuple(args,"Odddddii", &ts, &tc, &per, &rp, &b, &T14, &transittype, &nthreads)) return NULL;
+    if(!PyArg_ParseTuple(args,"Odddddii", &ts, &tc, &per, &rp, &T14, &b, &transittype, &nthreads)) return NULL;
     
     dims[0] = PyArray_DIMS(ts)[0];
     ds = (PyArrayObject *) PyArray_SimpleNew(1, dims, PyArray_TYPE(ts));
