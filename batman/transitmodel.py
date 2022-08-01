@@ -121,7 +121,7 @@ class TransitModel(object):
         if transittype == "primary": self.transittype = 1
         else: 
             self.transittype = 2
-            params.t0 = self.get_t_conjunction(params)		
+            params.t0 = self.get_t_conjunction(params)
 
         if fac != None: self.fac = fac
         else: self.fac = self._get_fac()
@@ -227,7 +227,7 @@ class TransitModel(object):
         >>> flux = m.light_curve(params)
         """
         #recalculates rsky and fac if necessary
-        if params.t0 != self.t0 or params.per != self.per or params.b != self.b or params.rp != self.rp or params.T14 != self.T14 or params.t_secondary != self.t_secondary:
+        if params.t0 != self.t0 or params.per != self.per or params.rp != self.rp or params.b != self.b or params.T14 != self.T14 or params.t_secondary != self.t_secondary:
             if self.transittype == 2 and params.t_secondary != self.t_secondary:
                 params.t0 = self.get_t_conjunction(params)
             self.ds= _rsky._rsky(self.t_supersample, params.t0, params.per, params.rp, params.b, params.T14, self.transittype, self.nthreads)

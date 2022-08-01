@@ -51,7 +51,7 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 
         If f_only is 1, this function returns the true anomaly instead of the distance.
     */
-    double tc, per, b, T14, BIGD = 100.;
+    double tc, per, rp, b, T14, BIGD = 100.;
     int transittype, nthreads;;
     npy_intp dims[1];
     PyArrayObject *ts, *ds;
