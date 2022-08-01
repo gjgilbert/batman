@@ -66,14 +66,6 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 
     const double n = 2.*M_PI/per;  // mean motion
     const double eps = 1.0e-7;
-    
-    printf(tc);
-    printf(per);
-    printf(rp);
-    printf(b);
-    printf(T14);
-
-
 
     #if defined (_OPENMP) && !defined(_OPENACC)
     omp_set_num_threads(nthreads);  //specifies number of threads (if OpenMP is supported)
