@@ -109,12 +109,12 @@ static PyObject *_rsky(PyObject *self, PyObject *args)
     return _rsky_or_f(self, args, 0);
 } 
 
-/*
+
 static PyObject *_getf(PyObject *self, PyObject *args)
 {
     return _rsky_or_f(self, args, 1);
 }
-*/
+
 
 static char _rsky_doc[] = """ This module computes the distance between the centers of the \
 star and the planet in the plane of the sky.  This parameter is \
@@ -123,12 +123,12 @@ denoted r_sky = sqrt(x^2 + y^2) in the Seager Exoplanets book \
 this quantity is denoted d.\
 LK 4/27/12 """;
 
-/*
+
 static char _getf_doc[] = """ This module computes the true anomaly. This parameter is \
 denoted f in the Seager Exoplanets book \
 (see the section by Murray, and Winn eq. 44).\
 BM 1/18/16 """;
-*/
+
 
 static PyMethodDef _rsky_methods[] = {
   {"_rsky", _rsky,METH_VARARGS,_rsky_doc},{"_getf", _getf,METH_VARARGS,_getf_doc},{NULL}};
