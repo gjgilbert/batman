@@ -206,7 +206,7 @@ class TransitModel(object):
             self.t_supersample,
             params.t0,
             params.per,
-            params.rp,
+            np.abs(params.rp),
             params.b,
             params.T14,
             self.transittype,
@@ -456,7 +456,7 @@ class TransitModel(object):
         if (
             params.t0 != self.t0
             or params.per != self.per
-            or params.rp != self.rp
+            or np.abs(params.rp) != self.rp
             or params.b != self.b
             or params.T14 != self.T14
             or params.t_secondary != self.t_secondary
@@ -467,7 +467,7 @@ class TransitModel(object):
                 self.t_supersample,
                 params.t0,
                 params.per,
-                params.rp,
+                np.abs(params.rp),
                 params.b,
                 params.T14,
                 self.transittype,

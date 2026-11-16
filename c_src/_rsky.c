@@ -38,8 +38,6 @@
 
 static PyObject *_rsky(PyObject *self, PyObject *args);
 
-/*static PyObject *_getf(PyObject *self, PyObject *args);*/
-
 static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
 {
     /*
@@ -64,7 +62,6 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
     double *t_array = PyArray_DATA(ts);
     double *output_array = PyArray_DATA(ds);
 
-    const double n = 2.*M_PI/per;  // mean motion
     const double eps = 1.0e-7;
 
     #if defined (_OPENMP) && !defined(_OPENACC)
@@ -80,11 +77,12 @@ static PyObject *_rsky_or_f(PyObject *self, PyObject *args, int f_only)
     {
         double t = (t_array[i]-tc);
         double f = 2*M_PI*t/per;
-        double t_phi = fmod(t,per);
-        
-        if (t_phi > per/2.){
-            t_phi -= per;
-        }
+
+        //secondary eclipse is centered half an orbit after primary transit
+        if (transittype == 2) t -= per/2.;
+
+        //time from the nearest transit (or eclipse) center, in [-per/2, per/2]
+        double t_phi = t - per*round(t/per);
 
         if (f_only) {
             output_array[i] = f;
