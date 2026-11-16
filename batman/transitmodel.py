@@ -623,6 +623,7 @@ class TransitModel(object):
             self.t_supersample,
             self.t0,
             self.per,
+            self.rp,
             self.b,
             self.T14,
             self.transittype,
