@@ -11,7 +11,10 @@ build/*
 *.blg
 *.eps
 *.txt
+.coverage
+.idea/
 
 dist
 MANIFEST
 batman_package.egg-info
+.DS_Store

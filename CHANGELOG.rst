@@ -1,4 +1,20 @@
 .. :changelog:
+2.5.3 (2025-05-05)
+~~~~~~~~~~~~~~~~~~
+- update CI to latest stable python versions
+- update numpy version to 2.0 in C extensions
+   
+2.5.2 (2025-10-01)
+~~~~~~~~~~~~~~~~~~
+- renamed I variable in common.h to avoid duplication with linux macros
+
+2.5.1 (2024-16-04)
+~~~~~~~~~~~~~~~~~~
+- created new tests for `transitmodels.py`
+
+2.5.0 (2024-16-04)
+~~~~~~~~~~~~~~~~~~
+- updated `setup.py` file with setuptools instead of distutils.
 
 2.4.9 (2022-29-05)
 ~~~~~~~~~~~~~~~~~~
