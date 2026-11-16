@@ -112,14 +112,19 @@ def test_quickstart():
     params.t0 = 0.0
     params.per = 1.0
     params.rp = 0.1
-    params.a = 15.0
-    params.inc = 87.0
-    params.ecc = 0.0
-    params.w = 90.0
+    # b and T14 equivalent to the original a = 15, inc = 87 deg circular orbit
+    a, inc = 15.0, np.radians(87.0)
+    params.b = a * np.cos(inc)
+    params.T14 = (
+        params.per
+        / np.pi
+        * np.arcsin(np.sqrt((1 + params.rp) ** 2 - params.b**2) / (a * np.sin(inc)))
+    )
     params.u = [0.1, 0.3]
     params.limb_dark = "quadratic"
 
     t = np.linspace(-0.015, 0.015, 100)
     m = batman.TransitModel(params, t)
     flux = m.light_curve(params)
-    np.testing.assert_allclose(flux, expected_quickstart, atol=1e-7)
+    # the straight-chord (b, T14) model departs ~4e-6 from the curved a = 15 orbit
+    np.testing.assert_allclose(flux, expected_quickstart, atol=5e-6)

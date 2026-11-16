@@ -15,10 +15,8 @@ def default_params():
     params.t0 = 0.0
     params.per = 1.0
     params.rp = 0.1
-    params.a = 15.0
-    params.inc = 87.0
-    params.ecc = 0.0
-    params.w = 90.0
+    params.b = 0.785  # a = 15, inc = 87 deg
+    params.T14 = 0.0164
     params.u = [0.1, 0.3]
     return params
 
